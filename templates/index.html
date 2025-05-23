@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Set character encoding to UTF-8 -->
+    <meta charset="UTF-8">
+    <!-- Ensure responsive design for different devices -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Set page title -->
+    <title>Email Spam Classifier</title>
+    <!-- Include Tailwind CSS via CDN for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <!-- Main container for the UI -->
+    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-lg">
+        <!-- Heading for the application -->
+        <h1 class="text-3xl font-bold text-center mb-6 text-gray-800">Email Spam Classifier</h1>
+        <!-- Input section for email text -->
+        <div class="mb-6">
+            <!-- Label for the textarea -->
+            <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Enter Email Text:</label>
+            <!-- Textarea for user to input email text -->
+            <textarea id="email" rows="6" class="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y" placeholder="Paste your email here..."></textarea>
+        </div>
+        <!-- Button to trigger prediction -->
+        <button onclick="predictSpam()" class="w-full bg-blue-600 text-white py-3 rounded-md hover:bg-blue-700 transition duration-200">Predict</button>
+        <!-- Container for displaying prediction results -->
+        <div id="result" class="mt-6 text-center"></div>
+    </div>
+
+    <!-- JavaScript for handling predictions -->
+    <script>
+        // Async function to send email text to server and display results
+        async function predictSpam() {
+            // Get the email text from the textarea
+            const emailText = document.getElementById('email').value;
+            // Get the result div for displaying output
+            const resultDiv = document.getElementById('result');
+
+            // Validate input
+            if (!emailText.trim()) {
+                // Display error if input is empty
+                resultDiv.innerHTML = '<p class="text-red-500 font-medium">Please enter an email text.</p>';
+                return;
+            }
+
+            try {
+                // Send POST request to the /predict endpoint
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email: emailText })
+                });
+
+                // Check if response is OK
+                if (!response.ok) {
+                    // Handle HTTP errors (e.g., 400 for empty input)
+                    const errorData = await response.json();
+                    resultDiv.innerHTML = `<p class="text-red-500 font-medium">Error: ${errorData.error}</p>`;
+                    return;
+                }
+
+                // Parse the JSON response
+                const data = await response.json();
+
+                // Display prediction and probabilities
+                resultDiv.innerHTML = `
+                    <p class="text-lg font-semibold text-gray-800">Prediction: ${data.prediction}</p>
+                    <p class="text-gray-600">Spam Probability: ${(data.probability_spam * 100).toFixed(2)}%</p>
+                    <p class="text-gray-600">Not Spam Probability: ${(data.probability_not_spam * 100).toFixed(2)}%</p>
+                `;
+            } catch (error) {
+                // Handle network or other errors
+                resultDiv.innerHTML = '<p class="text-red-500 font-medium">Error: Could not connect to the server.</p>';
+                console.error('Error:', error);
+            }
+        }
+    </script>
+</body>
+</html>

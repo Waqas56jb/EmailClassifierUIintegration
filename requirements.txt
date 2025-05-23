@@ -1,0 +1,10 @@
+pandas
+numpy
+scikit-learn
+nltk
+emoji
+wordcloud
+matplotlib
+seaborn
+joblib
+xgboost
